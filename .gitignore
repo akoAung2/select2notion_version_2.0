@@ -1,0 +1,20 @@
+# Local secrets and machine-specific configuration
+.env
+.env.*
+!.env.example
+
+# Dependencies and generated output
+node_modules/
+**/node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Logs and runtime files
+*.log
+*.pid
+
+# OS and editor metadata
+.DS_Store
+.idea/
+.vscode/

@@ -1,0 +1,634 @@
+You are a senior backend architect and production engineer.
+
+Upgrade the existing Economic Calendar system.
+
+IMPORTANT:
+
+Do not redesign UI.
+Do not remove existing working features.
+
+Current system already has:
+
+- Redis queue
+- Firestore storage
+- FRED macro engine
+- Alpha Vantage API key
+- Telegram notification system
+- Economic calendar dashboard
+
+
+Goal:
+
+Make Economic Calendar live, reliable and provider-failure resistant.
+
+Current problem:
+
+FMP economic calendar endpoint hits plan limitation (HTTP 402).
+
+The dashboard currently depends too much on FMP.
+
+Create a multi-provider fallback architecture.
+
+
+========================================
+PART 1 — CURRENT ECONOMIC CALENDAR AUDIT
+========================================
+
+Audit current pipeline:
+
+
+Economic Calendar Provider
+
+        ↓
+
+Calendar Fetch Service
+
+        ↓
+
+Scheduler
+
+        ↓
+
+Firestore economic_events
+
+        ↓
+
+Backend API
+
+        ↓
+
+Frontend Dashboard
+
+
+Verify:
+
+- Current provider
+- API key loading
+- Scheduler status
+- Firestore writes
+- Dashboard API
+
+
+Return:
+
+Root cause:
+
+File:
+Function:
+Line:
+
+
+========================================
+PART 2 — NEW PROVIDER ARCHITECTURE
+========================================
+
+
+Implement provider fallback layer.
+
+
+Required architecture:
+
+
+Primary:
+
+FMP Provider
+
+
+Fallback 1:
+
+Alpha Vantage Provider
+
+
+Fallback 2:
+
+FRED Macro Provider
+
+
+Fallback 3:
+
+Firestore Cached Events
+
+
+
+Flow:
+
+
+FMP
+
+↓
+
+If success:
+save data
+
+
+If failed:
+
+Alpha Vantage
+
+↓
+
+If failed:
+
+FRED
+
+↓
+
+If failed:
+
+Firestore cache
+
+
+
+Never return empty calendar.
+
+
+========================================
+PART 3 — CREATE PROVIDER SERVICE LAYER
+========================================
+
+
+Create:
+
+
+economicCalendarService.ts
+
+
+Responsibilities:
+
+
+fetchEconomicEvents()
+
+
+Logic:
+
+
+try FMP
+
+catch error
+
+
+try Alpha Vantage
+
+
+catch error
+
+
+try FRED
+
+
+catch error
+
+
+return Firestore cache
+
+
+
+Each provider must return normalized format.
+
+
+========================================
+PART 4 — NORMALIZE DATA FORMAT
+========================================
+
+
+All providers must map into:
+
+
+economic_events
+
+
+Schema:
+
+
+{
+eventId,
+
+title,
+
+currency,
+
+country,
+
+impact,
+
+eventTime,
+
+actual,
+
+forecast,
+
+previous,
+
+source,
+
+createdAt,
+
+updatedAt,
+
+expiresAt
+}
+
+
+
+Example:
+
+
+{
+title:"US CPI",
+
+currency:"USD",
+
+impact:"HIGH",
+
+source:"alpha_vantage"
+}
+
+
+========================================
+PART 5 — ALPHA VANTAGE INTEGRATION
+========================================
+
+
+Use existing:
+
+ALPHA_VANTAGE_API_KEY
+
+
+Verify:
+
+
+API key loaded from secrets.
+
+
+Create:
+
+
+alphaVantageCalendarClient.ts
+
+
+Handle:
+
+
+- API errors
+- empty response
+- rate limit
+- retry
+
+
+Add logs:
+
+
+Alpha Vantage request
+
+Response count
+
+Fallback activated
+
+
+========================================
+PART 6 — FRED INTEGRATION
+========================================
+
+
+Use existing FRED engine.
+
+
+Use for:
+
+- CPI
+- PCE
+- GDP
+- Fed Funds
+- Employment
+- Unemployment
+
+
+Do not replace FRED.
+
+Connect:
+
+
+FRED Macro
+
++
+
+Economic Calendar
+
+
+========================================
+PART 7 — FIRESTORE ARCHITECTURE
+========================================
+
+
+Separate:
+
+
+UPCOMING EVENTS
+
+
+Collection:
+
+economic_events
+
+
+Store:
+
+
+future events only
+
+
+TTL:
+
+7 days
+
+
+-----------------------------
+
+
+RELEASED EVENTS
+
+
+Collection:
+
+released_events
+
+
+Store:
+
+
+actual result
+
+
+TTL:
+
+72 hours
+
+
+
+Do not delete active upcoming events.
+
+
+========================================
+PART 8 — SCHEDULER UPGRADE
+========================================
+
+
+Verify scheduler.
+
+
+Required:
+
+
+Normal:
+
+30 minute sync
+
+
+High impact window:
+
+5-10 minute sync
+
+
+Add logs:
+
+
+Calendar sync started
+
+
+Provider selected:
+
+
+Events fetched:
+
+
+Firestore saved:
+
+
+Next sync:
+
+
+========================================
+PART 9 — DASHBOARD VERIFICATION
+========================================
+
+
+Verify:
+
+
+GET /api/news/calendar
+
+
+returns:
+
+
+- upcoming events
+- impact level
+- currency
+- actual
+- forecast
+- previous
+
+
+Frontend must never show empty state if cache exists.
+
+
+========================================
+PART 10 — TELEGRAM WARNING INTEGRATION
+========================================
+
+
+Do not break existing Telegram system.
+
+
+Economic event:
+
+↓
+
+User settings
+
+
+Check:
+
+
+impact filter
+
+currency filter
+
+warning timing:
+
+
+60 minutes
+
+30 minutes
+
+15 minutes
+
+5 minutes
+
+
+↓
+
+Redis Telegram Queue
+
+
+↓
+
+Telegram Worker
+
+
+
+Prevent duplicate:
+
+warning_sent:{eventId}:{userId}
+
+
+TTL:
+
+24 hours
+
+
+========================================
+PART 11 — LIVE TEST
+========================================
+
+
+Run:
+
+
+1.
+
+Manual calendar sync
+
+
+2.
+
+Test FMP failure
+
+
+3.
+
+Confirm Alpha Vantage fallback
+
+
+4.
+
+Confirm FRED fallback
+
+
+5.
+
+Confirm Firestore cache fallback
+
+
+6.
+
+Verify dashboard
+
+
+7.
+
+Verify Telegram warning
+
+
+Generate logs.
+
+
+========================================
+PART 12 — ERROR HANDLING
+========================================
+
+
+Implement:
+
+
+Provider retry:
+
+max 3 attempts
+
+
+Exponential backoff:
+
+
+1s
+
+2s
+
+4s
+
+
+Log failures:
+
+
+calendar_errors
+
+
+Store:
+
+
+provider
+
+error
+
+timestamp
+
+
+
+========================================
+FINAL REPORT
+========================================
+
+
+Return:
+
+
+1.
+
+Current root cause
+
+2.
+
+Files changed
+
+3.
+
+Architecture update
+
+4.
+
+Provider status
+
+5.
+
+FMP status
+
+6.
+
+Alpha Vantage status
+
+7.
+
+FRED status
+
+8.
+
+Firestore status
+
+9.
+
+Scheduler status
+
+10.
+
+Dashboard status
+
+11.
+
+Telegram status
+
+
+Final:
+
+PASS / FAIL
+
+
+Only mark COMPLETE after rebuild and live verification.

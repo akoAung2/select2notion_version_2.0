@@ -1,0 +1,380 @@
+IMPORTANT:
+Do NOT add any new features.
+Do NOT refactor unrelated code.
+Do NOT redesign UI.
+Only verify, detect root causes, automatically fix real issues, then verify again until PASS.
+
+==================================================
+STEP 1 — Restart Server & Reload Secrets
+==================================================
+
+The FRED_API_KEY has been updated in Replit Secrets.
+
+Completely restart the backend so every environment variable is reloaded.
+
+Verify:
+
+- process.env.FRED_API_KEY exists
+- length is exactly 32
+- FRED client initializes successfully
+- no HTTP 400
+- no authentication error
+- no invalid key warning
+
+If not:
+
+Find root cause.
+
+Fix automatically.
+
+Restart again.
+
+Verify again.
+
+==================================================
+STEP 2 — Live FRED Verification
+==================================================
+
+Run live requests using the production FRED client.
+
+Verify these indicators:
+
+- CPI
+- UNRATE
+- FEDFUNDS
+- GDP
+- DGS10
+
+Confirm:
+
+✓ HTTP 200
+
+✓ valid JSON
+
+✓ latest observation
+
+✓ values parsed correctly
+
+✓ timestamps parsed correctly
+
+Verify the Macro Engine is actually consuming these values.
+
+Not only fetching them.
+
+If any dataset is not flowing into the Macro Engine:
+
+Find root cause.
+
+Fix automatically.
+
+==================================================
+STEP 3 — End-to-End Macro Pipeline
+==================================================
+
+Verify the complete pipeline.
+
+FRED
+
+↓
+
+Macro Engine
+
+↓
+
+Market Bias Engine
+
+↓
+
+AI Prompt Builder
+
+↓
+
+Gemini
+
+↓
+
+Dashboard
+
+↓
+
+Telegram
+
+The exact same macro values must appear throughout the pipeline.
+
+Compare every stage.
+
+Detect:
+
+missing fields
+
+null values
+
+mapping errors
+
+stale cache
+
+wrong formatting
+
+timezone mismatch
+
+Fix automatically.
+
+==================================================
+STEP 4 — Dashboard Verification
+==================================================
+
+Verify every dashboard widget.
+
+Check:
+
+USD Macro Bias
+
+Market Impact Matrix
+
+Economic Calendar
+
+Live Releases
+
+Upcoming Events
+
+AI Fundamental Analysis
+
+Market News
+
+Ask AI
+
+Verify:
+
+No blank cards
+
+No placeholder values
+
+No stale values
+
+No console errors
+
+No failed API calls
+
+Verify FRED values appear inside the dashboard where expected.
+
+==================================================
+STEP 5 — Telegram Verification
+==================================================
+
+Verify Telegram output.
+
+Check:
+
+Macro summary
+
+Fundamental analysis
+
+Market impact
+
+Numbers
+
+Forecast
+
+Previous
+
+Actual
+
+Formatting
+
+Myanmar output
+
+Verify Telegram output matches Dashboard output.
+
+No inconsistent values.
+
+If mismatch:
+
+Find root cause.
+
+Fix automatically.
+
+==================================================
+STEP 6 — Gemini Verification
+==================================================
+
+Verify Gemini receives live FRED data.
+
+Verify the production prompt contains:
+
+Current macro values
+
+Current market bias
+
+Current economic event
+
+Current market impact
+
+Verify AI output follows the production template exactly.
+
+Template:
+
+🧠 AI Market Analysis
+
+📌 သတင်းအကျဉ်း
+
+📊 အဓိကအချက်များ
+
+📈 Fundamental Meaning
+
+🌎 Market Impact
+
+🎯 Trader Focus
+
+No truncated output.
+
+No missing sections.
+
+No English response.
+
+Myanmar output only.
+
+==================================================
+STEP 7 — Cache Verification
+==================================================
+
+Verify every cache.
+
+Firestore cache
+
+Memory cache
+
+Polling cache
+
+AI cache
+
+Macro cache
+
+Verify:
+
+TTL works
+
+Expired cache removed
+
+Fresh cache replaces old cache
+
+No stale values after refresh
+
+If cache blocks fresh FRED data:
+
+Fix automatically.
+
+==================================================
+STEP 8 — Polling Verification
+==================================================
+
+Verify polling engine.
+
+30 second polling
+
+10 second high-impact polling
+
+Verify:
+
+No duplicated events
+
+No missed updates
+
+No polling crashes
+
+No memory leak
+
+No overlapping jobs
+
+No orphan timers
+
+==================================================
+STEP 9 — Error Recovery Test
+==================================================
+
+Simulate failures.
+
+Temporarily fail:
+
+FRED
+
+NewsAPI
+
+FMP
+
+Gemini
+
+Verify:
+
+Retry works
+
+Fallback works
+
+Application stays alive
+
+Dashboard still loads
+
+Telegram queue survives
+
+Cache fallback works
+
+Auto recovery succeeds.
+
+==================================================
+STEP 10 — Production Stress Test
+==================================================
+
+Run production verification.
+
+Simulate:
+
+multiple polling cycles
+
+multiple users
+
+multiple Ask AI requests
+
+parallel API requests
+
+Verify:
+
+No race conditions
+
+No duplicated notifications
+
+No deadlocks
+
+No memory leak
+
+No unhandled promise rejection
+
+No timeout
+
+==================================================
+STEP 11 — Auto Fix Loop
+==================================================
+
+If any issue is found:
+
+1.
+
+Identify exact root cause.
+
+2.
+
+Fix automatically.
+
+3.
+
+Rebuild.
+
+4.
+
+Restart.
+
+5.
+
+Retest.
+
+Repeat until PASS.
+
+================...

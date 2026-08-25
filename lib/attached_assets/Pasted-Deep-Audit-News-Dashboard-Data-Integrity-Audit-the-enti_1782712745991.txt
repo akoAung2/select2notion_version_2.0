@@ -1,0 +1,827 @@
+Deep Audit — News Dashboard Data Integrity
+
+
+
+Audit the entire News Dashboard architecture.
+
+
+
+Verify ALL of the following:
+
+
+
+1.
+
+Upcoming High Impact News
+
+
+
+- Is the dashboard always showing upcoming High Impact News?
+
+- If not, find the root cause.
+
+- Verify polling scheduler.
+
+- Verify cache.
+
+- Verify Firestore history.
+
+- Verify dashboard API.
+
+
+
+2.
+
+
+
+Economic Calendar
+
+
+
+Verify:
+
+
+
+Calendar API
+
+
+
+Firestore history
+
+
+
+Cache
+
+
+
+Scheduler
+
+
+
+Frontend rendering
+
+
+
+If live providers temporarily fail, the dashboard should automatically display the latest cached calendar instead of becoming empty.
+
+
+
+3.
+
+
+
+Live News
+
+
+
+Verify:
+
+
+
+NewsAPI
+
+
+
+FMP
+
+
+
+Any additional news providers
+
+
+
+If provider fails,
+
+
+
+fallback to Firestore history.
+
+
+
+Users should NEVER see an empty dashboard.
+
+
+
+4.
+
+
+
+Released News
+
+
+
+After a news release,
+
+
+
+display it in Live Releases.
+
+
+
+Automatically expire after exactly 72 hours.
+
+
+
+Implement automatic cleanup.
+
+
+
+Firestore TTL
+
+
+
+or scheduled cleanup
+
+
+
+or backend cleanup job.
+
+
+
+Do not remove active records.
+
+
+
+Only remove released news older than 72 hours.
+
+
+
+5.
+
+
+
+Market Matrix
+
+
+
+Audit whether the Market Matrix is actually generated from AI.
+
+
+
+Verify:
+
+
+
+Gemini output
+
+
+
+Prompt
+
+
+
+Backend mapping
+
+
+
+Frontend rendering
+
+
+
+If static values exist,
+
+
+
+replace them with live AI generated data.
+
+
+
+Root Cause Report
+
+
+
+If any issue exists,
+
+
+
+find the exact backend file,
+
+
+
+exact function,
+
+
+
+exact line,
+
+
+
+and explain why.
+
+
+
+Then automatically fix.
+
+
+
+Finally rebuild and verify.
+
+
+
+Return:
+
+
+
+PASS / FAIL
+
+
+
+for every item.
+
+
+
+Production Audit — FRED Macro Engine
+
+
+
+Verify the complete FRED architecture.
+
+
+
+Check:
+
+
+
+FRED API
+
+
+
+Macro Engine
+
+
+
+AI Prompt
+
+
+
+Dashboard
+
+
+
+Telegram
+
+
+
+AI Reports
+
+
+
+Verify that every macro indicator shown below is LIVE:
+
+
+
+CPI
+
+
+
+Core CPI
+
+
+
+PCE
+
+
+
+Fed Funds
+
+
+
+GDP
+
+
+
+10Y Treasury
+
+
+
+Unemployment
+
+
+
+Payroll
+
+
+
+Inflation Expectation
+
+
+
+Effective Fed Rate
+
+
+
+Verify data flow:
+
+
+
+FRED API
+
+
+
+↓
+
+
+
+Macro Engine
+
+
+
+↓
+
+
+
+AI Prompt
+
+
+
+↓
+
+
+
+Dashboard
+
+
+
+↓
+
+
+
+Telegram
+
+
+
+↓
+
+
+
+AI Reports
+
+
+
+If historical data is missing anywhere,
+
+
+
+find the root cause.
+
+
+
+Auto fix.
+
+
+
+Verify every endpoint returns LIVE values.
+
+
+
+Not cached fake values.
+
+
+
+Generate verification logs.
+
+
+
+Return PASS / FAIL.
+
+
+
+Production Audit — Telegram Notification System
+
+
+
+Audit the complete Telegram architecture.
+
+
+
+Verify:
+
+
+
+User personalization
+
+
+
+Currency filter
+
+
+
+Impact filter
+
+
+
+Notification timing
+
+
+
+Own settings
+
+
+
+Own Telegram ID
+
+
+
+Own API key
+
+
+
+Own model
+
+
+
+Every user should only receive notifications matching their own settings.
+
+
+
+Verify:
+
+
+
+High Impact
+
+
+
+Medium Impact
+
+
+
+Low Impact
+
+
+
+Currency filter
+
+
+
+Notification timing
+
+
+
+1 hour before
+
+
+
+30 min before
+
+
+
+15 min before
+
+
+
+5 min before
+
+
+
+Release
+
+
+
+1 minute after release
+
+
+
+AI Analysis
+
+
+
+Verify scheduling logic.
+
+
+
+Verify scheduler.
+
+
+
+Verify duplicate prevention.
+
+
+
+Verify delayed messages.
+
+
+
+Verify message ordering.
+
+
+
+Verify Telegram template.
+
+
+
+Verify Myanmar template.
+
+
+
+Verify AI template.
+
+
+
+Verify AI output.
+
+
+
+If any mismatch exists,
+
+
+
+find root cause
+
+
+
+and automatically fix.
+
+
+
+Return PASS /FAIL.
+
+
+
+Production Audit — AI Analysis Pipeline
+
+
+
+Verify the complete AI pipeline.
+
+
+
+Released News
+
+
+
+↓
+
+
+
+News Fetch
+
+
+
+↓
+
+
+
+Prompt Builder
+
+
+
+↓
+
+
+
+Gemini
+
+
+
+↓
+
+
+
+Myanmar Template
+
+
+
+↓
+
+
+
+Telegram
+
+
+
+↓
+
+
+
+Dashboard
+
+
+
+↓
+
+
+
+Firestore
+
+
+
+Verify:
+
+
+
+Every authenticated user uses ONLY:
+
+
+
+their own API key
+
+
+
+their own selected model
+
+
+
+their own cache
+
+
+
+their own AI report
+
+
+
+No shared cache.
+
+
+
+No shared API.
+
+
+
+No shared model.
+
+
+
+Verify output format:
+
+
+
+🧠 AI Market Analysis
+
+
+
+📌 သတင်းအကျဉ်း
+
+
+
+📊 အဓိကအချက်များ
+
+
+
+📈 Fundamental Meaning
+
+
+
+🌎 Market Impact
+
+
+
+🎯 Trader Focus
+
+
+
+Verify AI starts within
+
+
+
+30~60 seconds after release.
+
+
+
+Measure latency.
+
+
+
+Find bottlenecks.
+
+
+
+Optimize parallel execution if possible.
+
+
+
+Return timing report.
+
+
+
+Return PASS / FAIL.
+
+Production Reliability Audit
+
+
+
+Run a complete production scan.
+
+
+
+Check:
+
+
+
+API failures
+
+
+
+Cache failures
+
+
+
+Firestore failures
+
+
+
+Scheduler failures
+
+
+
+Polling failures
+
+
+
+Telegram failures
+
+
+
+News provider failures
+
+
+
+FRED failures
+
+
+
+Gemini failures
+
+
+
+Retry logic
+
+
+
+Fallback logic
+
+
+
+Memory leaks
+
+
+
+Unhandled promises
+
+
+
+Race conditions
+
+
+
+Duplicate events
+
+
+
+Duplicate alerts
+
+
+
+Expired records
+
+
+
+Broken indexes
+
+
+
+If ANY issue exists:
+
+
+
+Find Root Cause
+
+
+
+Auto Fix
+
+
+
+Rebuild
+
+
+
+Restart
+
+
+
+Retest
+
+
+
+Repeat until all tests PASS.
+
+
+
+Finally generate:
+
+
+
+Production Readiness Report
+
+
+
+including
+
+
+
+PASS / FAIL
+
+
+
+for every subsystem.

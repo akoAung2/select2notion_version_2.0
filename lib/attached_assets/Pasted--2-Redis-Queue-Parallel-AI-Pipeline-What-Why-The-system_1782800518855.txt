@@ -1,0 +1,62 @@
+#2 - Redis Queue + Parallel AI Pipeline
+What & Why
+The system currently processes AI analysis and Telegram notifications synchronously and has no deduplication guard — the same news event can trigger duplicate AI calls and duplicate Telegram messages. Upstash Redis credentials are already in Replit Secrets. This task implements the full Redis-backed worker architecture described in the audit brief:
+
+Redis as job queue so AI and Telegram jobs are processed off the hot path
+Duplicate prevention via 72-hour processed-event keys in Redis
+Worker pool that fans out AI jobs per user concurrently
+Telegram queue separated from the warning/alert system so AI analysis messages only send after generation completes
+Firestore fallback — if Redis is unavailable, the system falls back to direct Firestore processing (existing behavior), maintaining zero downtime
+Architecture target
+News Released → Event Engine → Redis AI Queue → AI Worker (per user, parallel)
+                                             → Telegram Worker (after AI done)
+             → (Redis down?) → Firestore direct path (existing fallback)
+
+Redis responsibilities
+Job queue (AI queue, Telegram queue)
+Duplicate prevention — processed:{eventId} key with 72h TTL
+Rate control — prevent concurrent flood of same event
+Retry with exponential backoff (max 3 attempts)
+Failure recovery — dead-letter logging to Firestore
+Done looks like
+Redis connects to Upstash via HTTP REST API on startup; connection logged.
+A redis ping test returns PONG on startup.
+When a high/medium impact event is released, it is enqueued in Redis (not processed inline).
+The AI worker pool processes jobs per user in parallel (not sequentially).
+A processed:{eventId} key prevents the same event from generating duplicate AI or Telegram messages within 72 hours.
+Telegram warning (impact alert) fires immediately; AI analysis message fires only after Gemini returns.
+If Redis is unavailable, the system falls back gracefully to the existing Firestore-direct path without crashing.
+A Redis status report is logged on startup: connection OK / fallback mode.
+No duplicate AI reports in Firestore for the same event.
+No duplicate Telegram messages for the same event+user.
+FRED macro data confirmed flowing into AI prompt (already fixed last session — verify still working).
+economic_events Firestore collection cleaned up at 72h TTL by cron (already added last session — verify).
+Market Matrix sourced from affectedAssets in AI report (already wired last session — verify).
+Full PASS/FAIL report across all 10 audit areas.
+Out of scope
+Changing the Gemini prompt format (already correct Myanmar template).
+Any frontend UI changes beyond what's needed to display queue/worker status.
+Replacing Firestore with Redis as primary storage (Redis is queue/cache only).
+ForexFactory / Investing.com unblocking (Cloudflare 403 — not fixable without proxy).
+Steps
+Redis connection service — Create artifacts/api-server/src/lib/redis.ts using Upstash REST API (UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN). Implement ping, set, get, del, lpush, rpop, expire wrappers. Export a isRedisReady() flag. Wrap all calls in try/catch so Redis failures are logged, not thrown.
+Queue manager — Create artifacts/api-server/src/lib/queue.ts with enqueueAIJob(eventId, payload) and enqueueTelegramJob(eventId, userId, message). Use Redis lists as queues. If Redis is down, return false so callers fall back to direct processing.
+Duplicate prevention — In the queue manager, before enqueuing any job, check processed:{eventId} in Redis. If present, skip (return "duplicate"). After successful AI processing, set processed:{eventId} with 72h TTL.
+AI worker pool — Create artifacts/api-server/src/workers/aiWorker.ts. Poll the AI queue (or be triggered inline). For each job, load all users with Gemini keys from Firestore and run generateFundamentalAnalysis per user in parallel (Promise.allSettled). After all users processed, enqueue Telegram jobs.
+Telegram worker — Create artifacts/api-server/src/workers/telegramWorker.ts. Dequeue from the Telegram queue and call broadcastTelegramMessage. Separate from the existing warning/alert path. Check telegram_sent:{eventId}:{userId} in Redis (72h TTL) before sending to prevent duplicates.
+Wire into event engine — In eventEngine.ts:processReleasedEvent, replace the inline sequential AI+Telegram calls with: check duplicate → enqueue AI job → if Redis down, run existing direct path. Keep the existing Phase 1 parallel fetch (save event, get news, get macro) unchanged.
+Retry logic — In the AI worker, wrap each user's Gemini call in a retry loop (max 3 attempts, 1s/2s/4s backoff). Log failures to Firestore ai_errors collection for dead-letter visibility.
+Startup integration — In index.ts or the server boot sequence, call ping() on Redis and log the result. Start the worker poll loop. Export a /api/health/redis endpoint returning {ok, latencyMs}.
+Verify FRED + Market Matrix — Confirm getMacroSnapshot() is still injected into AI prompts and affectedAssets still flows to the Market Matrix (changes from previous session). If any regression, re-apply.
+Build, restart, and full audit report — Run pnpm --filter @workspace/api-server run build, restart artifacts/api-server: API Server workflow, and produce the 11-point PASS/FAIL report covering: Architecture, Redis status, Worker status, Telegram status, AI pipeline, Firestore, FRED, Market Matrix, dedup, retry, fallback.
+Relevant files
+artifacts/api-server/src/engine/eventEngine.ts
+artifacts/api-server/src/engine/telegramBroadcast.ts
+artifacts/api-server/src/ai/geminiService.ts
+artifacts/api-server/src/ai/promptTemplate.ts
+artifacts/api-server/src/news/polling/pollingEngine.ts
+artifacts/api-server/src/scheduler/cron.ts
+artifacts/api-server/src/routes/news.ts
+artifacts/api-server/src/index.ts
+artifacts/api-server/package.json
+artifacts/api-server/build.mjs
