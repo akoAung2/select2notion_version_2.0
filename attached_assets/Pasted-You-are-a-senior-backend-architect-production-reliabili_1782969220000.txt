@@ -1,0 +1,217 @@
+You are a senior backend architect + production reliability engineer.
+
+Your task is to FULLY AUDIT and LIVE TEST the News Dashboard system end-to-end.
+
+IMPORTANT RULES:
+- Do NOT change UI/UX
+- Do NOT remove existing features
+- Only fix backend + data flow + sync issues
+- If any error is found → MUST find root cause → apply auto fix → re-test
+- System must reach REAL-TIME production stability
+
+====================================================
+PART 1 — LIVE NEWS AUTO SYNC VERIFICATION
+====================================================
+
+Check if LIVE economic news is syncing correctly:
+
+Verify:
+- FMP provider status (402 / rate limit / fallback)
+- Alpha Vantage provider status
+- FRED calendar provider status
+- Firestore economic_events collection updates
+- pollingEngine sync execution logs
+- cron scheduler execution logs
+
+LIVE TEST:
+1. Trigger manual sync
+2. Wait for new economic events ingestion
+3. Confirm Firestore is updating in real-time
+4. Confirm /api/news/calendar returns latest events
+
+If ANY provider fails:
+→ detect root cause
+→ apply fix (backoff / fallback / retry / mapping)
+→ re-run sync test
+
+====================================================
+PART 2 — API KEY VALIDATION TEST
+====================================================
+
+Verify:
+
+- user Gemini API keys exist in Firestore
+- user Telegram chat IDs exist
+- system is NOT using only GOOGLE_API_KEY fallback
+- each user uses THEIR OWN API KEY
+
+TEST:
+- simulate 5 users
+- run AI pipeline
+- confirm logs show:
+  "apiKeySource: user_key"
+
+If system fallback is used:
+→ identify missing user key
+→ fix routing logic
+→ enforce per-user API usage
+
+====================================================
+PART 3 — FIRESTORE DATA FLOW TEST
+====================================================
+
+Verify collections:
+
+- economic_events
+- released_events
+- ai_reports
+- telegram_logs
+
+Check:
+- data is being written correctly
+- TTL fields exist and working
+- no duplicate documents
+- no stale events shown as upcoming
+
+LIVE TEST:
+- insert fake CPI event
+- confirm:
+  Firestore write → API → dashboard → telegram pipeline
+
+If mismatch:
+→ trace pipeline step-by-step
+→ fix broken stage
+
+====================================================
+PART 4 — TELEGRAM LIVE DELIVERY TEST
+====================================================
+
+Verify:
+
+- webhook URL is correct
+- no stale deployment overriding webhook
+- warning system triggers correctly
+- AI message system triggers after generation
+
+LIVE TEST:
+- create fake HIGH impact CPI event
+- expected flow:
+
+1. warning sent (60/30/15/5/1 min)
+2. AI analysis generated
+3. Telegram message sent per user
+4. dedup works (no duplicates)
+
+If rate limit occurs:
+→ implement retry (max 3 retries, exponential backoff)
+→ log failure reason
+
+====================================================
+PART 5 — REDIS QUEUE + DEDUP TEST
+====================================================
+
+Verify:
+
+- queue:ai working
+- queue:telegram working
+- processed:{eventId} exists
+- tg_sent:{eventId}:{userId} exists
+
+LIVE TEST:
+- fire same event 3 times
+
+Expected:
+- ONLY 1 AI processing
+- ONLY 1 Telegram message per user
+
+If duplicates occur:
+→ fix dedup logic
+→ enforce Redis lock BEFORE enqueue
+
+====================================================
+PART 6 — ECONOMIC CALENDAR SYNC TEST
+====================================================
+
+Verify multi-provider cascade:
+
+FMP → Alpha Vantage → FRED → Firestore fallback
+
+Check:
+- fallback activation logs
+- stale cache detection
+- event freshness (isReleased logic correct)
+- high impact detection (CPI, NFP, FOMC)
+
+LIVE TEST:
+- force provider failure simulation
+- confirm system still returns calendar data
+
+If empty calendar:
+→ trace provider chain
+→ fix missing mapping or filter bug
+
+====================================================
+PART 7 — MARKET MATRIX VALIDATION
+====================================================
+
+Verify:
+- FRED macro data is live
+- affectedAssets is injected
+- AI generates USD / GOLD / SPX bias
+
+If neutral values persist:
+→ check input signals
+→ verify AI prompt injection
+→ ensure macro data is not stale
+
+====================================================
+PART 8 — ERROR HANDLING + AUTO FIX LOOP
+====================================================
+
+For EVERY failure:
+
+1. Identify file + function + line
+2. Explain root cause
+3. Apply fix
+4. Restart affected module
+5. Re-run test
+
+NO silent failures allowed.
+
+====================================================
+PART 9 — FINAL STRESS TEST
+====================================================
+
+Simulate:
+
+- 20 simultaneous economic events
+- 10 users
+- Redis load spike
+- Firestore write concurrency
+- Telegram burst sending
+
+Verify:
+- no crash
+- no duplicate messages
+- no memory leak
+- no unhandled promise rejection
+
+====================================================
+FINAL OUTPUT REQUIRED
+
+Return:
+
+1. System architecture status
+2. Live sync status
+3. API key routing status
+4. Firestore integrity status
+5. Telegram delivery status
+6. Redis queue status
+7. Economic calendar provider status
+8. Market Matrix status
+9. Detected bugs (if any)
+10. Fixes applied
+11. Final PASS / FAIL verdict
+
+ONLY return PASS if:
+ALL systems are stable under live test

@@ -1,0 +1,595 @@
+You are a senior backend architect and production engineer.
+
+Audit and upgrade this existing News Dashboard system.
+
+IMPORTANT:
+Do not redesign UI/UX.
+Do not remove existing working features.
+First analyze the current architecture, find root causes, fix issues, rebuild and verify.
+
+Goal:
+Make the production system stable, fast and scalable.
+
+========================================
+PART 1 — PUBLISHED WEBSITE WHITE SCREEN FIX
+========================================
+
+Audit the published deployment.
+
+Problem:
+Replit preview works but published URL shows blank/white screen.
+
+Check:
+
+- frontend build configuration
+- Vite base path
+- deployment entry point
+- static asset loading
+- API proxy configuration
+- environment variables in production
+- frontend/backend connection
+
+Find exact root cause:
+
+File:
+Function:
+Line:
+
+Then automatically fix.
+
+After fixing:
+
+- rebuild frontend
+- restart production server
+- verify published URL loads correctly
+
+Return PASS/FAIL.
+
+
+========================================
+PART 2 — REDIS INTEGRATION ARCHITECTURE
+========================================
+
+Redis credentials already exist in Replit Secrets.
+
+Verify:
+
+- Redis URL loading
+- Redis token loading
+- backend connection
+- Redis ping test
+
+Implement production Redis layer.
+
+Architecture:
+
+News Event
+      |
+      v
+Event Detection Engine
+      |
+      v
+Redis Queue
+      |
+      v
+Worker Pool
+      |
+      +----------------+
+      |                |
+      v                v
+
+AI Processing Worker
+Telegram Worker
+
+
+Redis responsibilities:
+
+1. Job Queue
+2. Duplicate prevention
+3. Temporary cache
+4. Rate control
+5. Retry handling
+
+
+Implement:
+
+- redis connection service
+- queue manager
+- worker manager
+- retry logic
+- failure recovery
+
+
+Verify Redis failure fallback.
+
+If Redis fails:
+system must continue using Firestore fallback.
+
+Return Redis test report.
+
+
+========================================
+PART 3 — PARALLEL AI FUNDAMENTAL ANALYSIS PIPELINE
+========================================
+
+Current requirement:
+
+When a high impact or medium impact news is released:
+
+AI Fundamental Analysis must reach Telegram within seconds.
+
+Do NOT process sequentially.
+
+
+Required architecture:
+
+
+News Released
+      |
+      |
+Event Engine
+      |
+      |
+Parallel Execution
+
+--------------------------------
+
+Task A:
+Save news event
+
+Task B:
+Prepare AI prompt data
+
+Task C:
+Load user settings
+
+
+--------------------------------
+
+Then:
+
+Redis Queue
+
+      |
+      |
+Worker Pool
+
+
+Worker:
+
+1.
+Resolve user:
+
+- user Gemini API key
+- selected model
+
+
+From Firestore:
+
+
+users/{uid}
+
+store:
+
+gemini_key
+ai_model
+telegram_settings
+
+
+2.
+Call Gemini using ONLY user's own API key.
+
+No shared user data.
+
+No shared AI cache.
+
+
+3.
+Generate Myanmar output.
+
+
+Required AI template:
+
+🧠 AI Market Analysis
+
+📌 သတင်းအကျဉ်း:
+
+📊 အဓိကအချက်များ:
+
+📈 Fundamental Meaning:
+
+🌎 Market Impact:
+
+USD:
+Bullish/Bearish
+
+Gold:
+Bullish/Bearish
+
+SPX:
+Bullish/Bearish
+
+
+🎯 Trader Focus:
+
+
+Verify output always follows this format.
+
+
+========================================
+PART 4 — TELEGRAM FUNDAMENTAL ANALYSIS SYSTEM
+========================================
+
+Separate warning system and AI analysis system.
+
+
+Warning system:
+
+Based on user settings:
+
+- High impact
+- Medium impact
+- Low impact
+- notification timing
+
+
+AI Fundamental message:
+
+Only send after AI generation.
+
+
+Flow:
+
+AI Output
+
+      |
+
+Redis Telegram Queue
+
+      |
+
+Telegram Worker
+
+      |
+
+Check user settings
+
+      |
+
+Send message
+
+
+Prevent:
+
+- duplicate messages
+- duplicate news processing
+- duplicate Telegram sends
+
+
+Implement:
+
+processed_news_id
+
+TTL:
+
+72 hours
+
+
+Return Telegram audit report.
+
+
+========================================
+PART 5 — FIRESTORE DATA ARCHITECTURE
+========================================
+
+Do not store unnecessary full history.
+
+Use lightweight storage.
+
+
+Collection:
+
+news_events
+
+
+Store:
+
+newsId
+title
+impact
+currency
+createdAt
+expiresAt
+
+
+TTL:
+
+72 hours
+
+
+--------------------------------
+
+
+Collection:
+
+ai_analysis
+
+
+Store:
+
+newsId
+userId
+summary
+marketImpact
+createdAt
+expiresAt
+
+
+TTL:
+
+72 hours
+
+
+--------------------------------
+
+
+Collection:
+
+telegram_logs
+
+
+Store:
+
+userId
+newsId
+messageType
+sentAt
+expiresAt
+
+
+TTL:
+
+3 days
+
+
+Verify Firestore TTL cleanup.
+
+
+========================================
+PART 6 — DASHBOARD DATA FLOW
+========================================
+
+
+Live Release Dashboard:
+
+
+Show raw released news.
+
+
+Source:
+
+Firestore news_events
+
+
+No AI required.
+
+
+--------------------------------
+
+
+AI Fundamental Dashboard:
+
+
+Show:
+
+AI generated analysis
+
+
+Source:
+
+Firestore ai_analysis
+
+
+Verify:
+
+Dashboard displays correct AI data.
+
+
+========================================
+PART 7 — USER PERSONALIZATION AUDIT
+========================================
+
+Verify:
+
+Each user has:
+
+- own Telegram ID
+- own Gemini API key
+- own selected model
+- own notification settings
+
+
+Test:
+
+User A:
+
+Gemini Flash
+
+
+User B:
+
+Gemini Pro
+
+
+Confirm:
+
+No shared cache.
+No shared response.
+
+
+========================================
+PART 8 — FRED MACRO ENGINE AUDIT
+========================================
+
+Verify complete pipeline:
+
+
+FRED API
+
+      |
+
+Macro Engine
+
+      |
+
+Firestore
+
+      |
+
+Dashboard
+
+
+Check live values:
+
+- CPI
+- Core CPI
+- PCE
+- GDP
+- Fed Funds
+- Payroll
+- Unemployment
+- 10Y Yield
+
+
+Verify:
+
+Not fake data.
+Not stale data.
+
+
+If broken:
+
+Find root cause.
+Auto fix.
+Restart.
+Retest.
+
+
+========================================
+PART 9 — MARKET MATRIX AI AUDIT
+========================================
+
+Verify Market Matrix is AI generated.
+
+Check:
+
+News data
+
++
+
+FRED macro data
+
++
+
+Economic calendar
+
+        |
+
+        v
+
+AI Analysis
+
+        |
+
+        v
+
+Market Matrix
+
+
+Output:
+
+USD:
+Bullish/Bearish
+
+Gold:
+Bullish/Bearish
+
+SPX:
+Bullish/Bearish
+
+
+If static values exist:
+
+Replace with live AI generated values.
+
+
+========================================
+PART 10 — PRODUCTION STRESS TEST
+========================================
+
+Test:
+
+- multiple news events
+- multiple Telegram users
+- concurrent AI requests
+- Redis queue load
+- Firestore writes
+- API failures
+
+
+Verify:
+
+- no duplicate alerts
+- no race condition
+- no memory leak
+- no unhandled promise
+
+
+Optimize parallel execution.
+
+
+========================================
+FINAL REPORT REQUIRED
+========================================
+
+Return:
+
+1.
+Architecture summary
+
+2.
+Files changed
+
+3.
+Root causes found
+
+4.
+Fixes applied
+
+5.
+Redis status
+
+6.
+Worker status
+
+7.
+Telegram status
+
+8.
+AI pipeline status
+
+9.
+Firestore status
+
+10.
+FRED status
+
+11.
+Market Matrix status
+
+
+Final result:
+
+PASS / FAIL
+
+Only report COMPLETE after rebuilding and testing production.

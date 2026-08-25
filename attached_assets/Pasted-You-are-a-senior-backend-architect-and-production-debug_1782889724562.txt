@@ -1,0 +1,489 @@
+You are a senior backend architect and production debugging engineer.
+
+Audit and fix the Economic Calendar live synchronization system.
+
+IMPORTANT:
+Do not redesign UI.
+Do not remove existing features.
+
+First:
+Analyze the current architecture.
+Find the exact root cause.
+Identify:
+File
+Function
+Line
+Reason
+
+Then automatically fix.
+After fixing:
+Rebuild
+Restart
+Run live verification test.
+
+Goal:
+
+Economic Calendar must always show live upcoming economic events.
+
+========================================
+PART 1 — ECONOMIC CALENDAR DATA FLOW AUDIT
+========================================
+
+Audit the complete pipeline:
+
+
+Economic Calendar Provider
+
+        ↓
+
+API Fetch Service
+
+        ↓
+
+Scheduler / Cron
+
+        ↓
+
+Calendar Normalization
+
+        ↓
+
+Firestore economic_events
+
+        ↓
+
+Backend API
+
+        ↓
+
+Frontend Dashboard
+
+
+Verify every step.
+
+
+Return:
+
+PASS / FAIL
+
+
+========================================
+PART 2 — FIND CURRENT DATA PROVIDER
+========================================
+
+
+Identify exactly:
+
+Which API is currently used for Economic Calendar?
+
+Check:
+
+- FMP API
+- ForexFactory integration
+- Investing.com integration
+- Other providers
+
+
+Show:
+
+Provider name
+
+API endpoint
+
+Environment variable used
+
+Last successful fetch time
+
+Last response status
+
+
+If provider returns empty data:
+
+Find why.
+
+
+========================================
+PART 3 — FMP FAILURE HANDLING
+========================================
+
+
+Check if FMP returns:
+
+
+HTTP 200
+
+but:
+
+{
+"Error Message":"Limit Reach"
+}
+
+
+Verify current behavior.
+
+
+If the system converts API errors into empty arrays:
+
+Fix it.
+
+
+Required:
+
+
+When provider fails:
+
+
+DO NOT show empty dashboard.
+
+
+Fallback:
+
+
+API failure
+
+↓
+
+Firestore latest cache
+
+↓
+
+Dashboard display
+
+
+Add logging:
+
+Provider failed
+Fallback activated
+Cache age
+
+
+========================================
+PART 4 — SCHEDULER AUDIT
+========================================
+
+
+Verify:
+
+
+Calendar sync scheduler exists.
+
+
+Check:
+
+- cron job
+- polling interval
+- startup execution
+- timezone handling
+- duplicate prevention
+
+
+Confirm:
+
+
+sync runs automatically after deployment restart.
+
+
+Add logs:
+
+
+Calendar sync started
+
+Fetching events
+
+Events received
+
+Events saved
+
+Next sync time
+
+
+========================================
+PART 5 — FIRESTORE ECONOMIC EVENTS AUDIT
+========================================
+
+
+Check collection:
+
+
+economic_events
+
+
+Verify documents contain:
+
+
+eventId
+
+title
+
+currency
+
+impact
+
+country
+
+eventTime
+
+actual
+
+forecast
+
+previous
+
+source
+
+createdAt
+
+expiresAt
+
+
+Find if data exists.
+
+
+If Firestore has data but dashboard empty:
+
+Find query/filter issue.
+
+
+Check:
+
+- expired documents
+- timezone mismatch
+- incorrect date filtering
+- wrong collection name
+- missing indexes
+
+
+Auto fix.
+
+
+========================================
+PART 6 — UPCOMING EVENT ARCHITECTURE FIX
+========================================
+
+
+Separate:
+
+
+UPCOMING EVENTS
+
+from
+
+
+RELEASED EVENTS
+
+
+Architecture:
+
+
+economic_calendar
+
+Store:
+
+today + next 7 days
+
+No aggressive TTL
+
+
+
+released_events
+
+Store:
+
+released news
+
+TTL:
+
+72 hours
+
+
+Implement if current architecture mixes both.
+
+
+========================================
+PART 7 — LIVE SYNC REQUIREMENT
+========================================
+
+
+Economic Calendar must automatically update:
+
+
+Before market session:
+
+sync
+
+During day:
+
+poll updates
+
+After release:
+
+move event to released section
+
+
+Required:
+
+
+Scheduler continuously updates Firestore.
+
+Dashboard reads latest Firestore data.
+
+
+========================================
+PART 8 — API RESPONSE TEST
+========================================
+
+
+Test:
+
+
+/api/news/calendar
+
+
+Verify:
+
+
+Returns upcoming events.
+
+
+Test:
+
+High impact USD events
+
+
+Example:
+
+CPI
+
+NFP
+
+FOMC
+
+Interest Rate
+
+
+Confirm:
+
+impact filtering works.
+
+
+========================================
+PART 9 — FRONTEND DISPLAY AUDIT
+========================================
+
+
+If backend has events but UI empty:
+
+
+Check:
+
+
+API response
+
+Frontend state
+
+React rendering
+
+Date formatting
+
+Timezone conversion
+
+Filters
+
+
+Fix automatically.
+
+
+========================================
+PART 10 — SECURITY + ENV AUDIT
+========================================
+
+
+Verify:
+
+
+API keys are loaded from environment secrets.
+
+
+Check:
+
+FMP_API_KEY
+
+News API keys
+
+Firebase config
+
+
+No hardcoded keys.
+
+
+========================================
+PART 11 — LIVE TEST
+========================================
+
+
+Run full test:
+
+
+1.
+
+Trigger manual calendar sync
+
+
+2.
+
+Check provider response
+
+
+3.
+
+Check Firestore write
+
+
+4.
+
+Check API output
+
+
+5.
+
+Check dashboard display
+
+
+Generate logs.
+
+
+========================================
+FINAL REPORT
+========================================
+
+
+Return:
+
+
+1. Root cause found
+
+2. Files changed
+
+3. Functions changed
+
+4. Fix applied
+
+5. Provider status
+
+6. Scheduler status
+
+7. Firestore status
+
+8. API status
+
+9. Frontend status
+
+10. Live test result
+
+
+Final:
+
+PASS / FAIL
+
+
+Only mark COMPLETE after real production verification.

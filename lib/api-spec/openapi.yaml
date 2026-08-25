@@ -1,0 +1,520 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: Select2Notion API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: trades
+    description: Trade journal operations
+  - name: notion
+    description: Notion integration operations
+  - name: ai
+    description: AI operations
+  - name: notifications
+    description: Notification settings
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /trades:
+    get:
+      operationId: getTrades
+      tags: [trades]
+      summary: List all trades
+      responses:
+        "200":
+          description: Trade list
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [trades]
+                properties:
+                  trades:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Trade"
+    post:
+      operationId: createTrade
+      tags: [trades]
+      summary: Create a trade
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TradeInput"
+      responses:
+        "201":
+          description: Created trade
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trade"
+
+  /trades/{id}:
+    patch:
+      operationId: updateTrade
+      tags: [trades]
+      summary: Update a trade
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TradeInput"
+      responses:
+        "200":
+          description: Updated trade
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trade"
+    delete:
+      operationId: deleteTrade
+      tags: [trades]
+      summary: Delete a trade
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deletion result
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success]
+                properties:
+                  success:
+                    type: boolean
+
+  /notion/schema:
+    get:
+      operationId: getNotionSchema
+      tags: [notion]
+      summary: Get Notion database schema
+      responses:
+        "200":
+          description: Notion schema
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotionSchemaResponse"
+
+  /notion/test:
+    post:
+      operationId: testNotionConnection
+      tags: [notion]
+      summary: Test Notion connection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotionConnectionTest"
+      responses:
+        "200":
+          description: Connection test result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotionConnectionStatus"
+
+  /notion/auto-detect:
+    post:
+      operationId: autoDetectNotion
+      tags: [notion]
+      summary: Auto-detect Notion database
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotionAutoDetectInput"
+      responses:
+        "200":
+          description: Auto-detect result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotionAutoDetectResult"
+
+  /notion/oauth/start:
+    get:
+      operationId: notionOAuthStart
+      tags: [notion]
+      summary: Start Notion OAuth flow
+      responses:
+        "200":
+          description: OAuth start response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OAuthStartInfo"
+
+  /notion/oauth/pending:
+    get:
+      operationId: getNotionOAuthPending
+      tags: [notion]
+      summary: Poll for pending OAuth result
+      responses:
+        "200":
+          description: Pending OAuth connection
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotionOAuthPendingResult"
+
+  /ai/chat:
+    post:
+      operationId: aiChat
+      tags: [ai]
+      summary: Send message to AI trading coach
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiChatInput"
+      responses:
+        "200":
+          description: AI chat response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatReply"
+
+  /ai/confirm-action:
+    post:
+      operationId: aiConfirmAction
+      tags: [ai]
+      summary: Confirm a pending AI action
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiConfirmInput"
+      responses:
+        "200":
+          description: Action result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiActionResult"
+
+  /ai/voice:
+    post:
+      operationId: aiVoice
+      tags: [ai]
+      summary: Transcribe voice audio
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiVoiceInput"
+      responses:
+        "200":
+          description: Transcription result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiVoiceResult"
+
+  /notification-settings:
+    get:
+      operationId: getNotificationSettings
+      tags: [notifications]
+      summary: Get notification settings
+      responses:
+        "200":
+          description: Notification settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationSettings"
+    post:
+      operationId: saveNotificationSettings
+      tags: [notifications]
+      summary: Save notification settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationSettingsInput"
+      responses:
+        "200":
+          description: Save result
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [message]
+                properties:
+                  message:
+                    type: string
+
+  /trigger-daily:
+    post:
+      operationId: triggerDailyReminder
+      tags: [notifications]
+      summary: Trigger daily reminder email
+      responses:
+        "200":
+          description: Trigger result
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [message]
+                properties:
+                  message:
+                    type: string
+
+  /trigger-weekly:
+    post:
+      operationId: triggerWeeklyReport
+      tags: [notifications]
+      summary: Trigger weekly report email
+      responses:
+        "200":
+          description: Trigger result
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [message]
+                properties:
+                  message:
+                    type: string
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+
+    Trade:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+      additionalProperties: true
+
+    TradeInput:
+      type: object
+      additionalProperties: true
+
+    NotionSchemaResponse:
+      type: object
+      required: [schema]
+      properties:
+        schema:
+          type: object
+          additionalProperties: true
+
+    NotionConnectionTest:
+      type: object
+      required: [apiKey, databaseId]
+      properties:
+        apiKey:
+          type: string
+        databaseId:
+          type: string
+
+    NotionConnectionStatus:
+      type: object
+      required: [status, message]
+      properties:
+        status:
+          type: string
+        message:
+          type: string
+
+    NotionAutoDetectInput:
+      type: object
+      required: [notion_token]
+      properties:
+        notion_token:
+          type: string
+
+    NotionAutoDetectResult:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+        message:
+          type: ["string", "null"]
+        best:
+          type: ["object", "null"]
+          additionalProperties: true
+        all:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+
+    OAuthStartInfo:
+      type: object
+      required: [oauthAvailable]
+      properties:
+        oauthAvailable:
+          type: boolean
+        url:
+          type: ["string", "null"]
+
+    NotionOAuthPendingResult:
+      type: object
+      required: [access_token]
+      properties:
+        access_token:
+          type: string
+        workspace_name:
+          type: ["string", "null"]
+        workspace_id:
+          type: ["string", "null"]
+        bot_id:
+          type: ["string", "null"]
+
+    AiChatInput:
+      type: object
+      required: [messages]
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChatMessage"
+
+    ChatMessage:
+      type: object
+      required: [role, content]
+      properties:
+        role:
+          type: string
+        content:
+          type: string
+
+    PendingAction:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+        summary:
+          type: object
+          additionalProperties: true
+        properties:
+          type: object
+          additionalProperties: true
+        name:
+          type: ["string", "null"]
+        propertyType:
+          type: ["string", "null"]
+        oldName:
+          type: ["string", "null"]
+        newName:
+          type: ["string", "null"]
+
+    ChatReply:
+      type: object
+      required: [reply, provider, intent]
+      properties:
+        reply:
+          type: string
+        provider:
+          type: string
+        intent:
+          type: string
+        pendingAction:
+          $ref: "#/components/schemas/PendingAction"
+
+    AiConfirmInput:
+      type: object
+      required: [actionType]
+      properties:
+        actionType:
+          type: string
+        data:
+          type: object
+          additionalProperties: true
+
+    AiActionResult:
+      type: object
+      required: [success]
+      properties:
+        success:
+          type: boolean
+        message:
+          type: ["string", "null"]
+        tradeId:
+          type: ["string", "null"]
+
+    AiVoiceInput:
+      type: object
+      required: [audioBase64, mimeType]
+      properties:
+        audioBase64:
+          type: string
+        mimeType:
+          type: string
+
+    AiVoiceResult:
+      type: object
+      required: [transcript]
+      properties:
+        transcript:
+          type: string
+        detectedLanguage:
+          type: ["string", "null"]
+
+    NotificationSettings:
+      type: object
+      required: [email, type]
+      properties:
+        email:
+          type: string
+        type:
+          type: string
+
+    NotificationSettingsInput:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+        type:
+          type: ["string", "null"]
